@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity(), androidx.appcompat.widget.SearchView.O
 
     private lateinit var binding:ActivityMainBinding
     private lateinit var adapter: DogAdapter
+    //Una lista que se puede llegar a alterar
     private val dogImages = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +37,8 @@ class MainActivity : AppCompatActivity(), androidx.appcompat.widget.SearchView.O
         binding.rvDogs.adapter = adapter
     }
 
+
+    // Se crea una instancia del objecto retrofit, con la URL base de la API, y el conversor de JSON
     private fun  getRetrofit():Retrofit{
         return Retrofit.Builder()
             .baseUrl("https://dog.ceo/api/breed/")
@@ -44,15 +47,21 @@ class MainActivity : AppCompatActivity(), androidx.appcompat.widget.SearchView.O
     }
 
     private fun searchByName(query:String){
+        //Se crea una co-rutina para que se ejecute la llamada a internet en un hilo secundario y no sobrecargar la aplicacion
         CoroutineScope(Dispatchers.IO).launch {
+            // Tendriamos la varaible call con un response de DogResponse
             val call = getRetrofit().create(APIService::class.java).getDogsByBreeds("$query/images")
             val puppies = call.body()
+            //Se ejecuta en el hilo principal
             runOnUiThread(){
+                //Si la llamada funciona
                 if(call.isSuccessful){
+                    // Puede llegar a ser un listado vacio pero no puede ser nulo
                     val images = puppies?.images ?: emptyList()
                     dogImages.clear()
                     dogImages.addAll(images)
                     adapter.notifyDataSetChanged()
+                //Si la llamada no funciona
                 }else{
                     ShowError()
                 }
